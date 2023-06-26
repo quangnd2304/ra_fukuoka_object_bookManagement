@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 7</title>
+</head>
+
+<body>
+    <form action="#">
+        <label for="bookId">Book Id</label>
+        <input type="text" name="bookId" id="bookId" /><br>
+        <label for="bookName">Book Name</label>
+        <input type="text" name="bookName" id="bookName" /><br>
+        <label for="price">Price</label>
+        <input type="number" name="price" id="price" /><br>
+        <label for="author">Author</label>
+        <input type="text" name="author" id="author" /><br>
+        <label for="status">Status</label>
+        <input type="radio" name="status" id="active" value="active" checked /><label for="active">Active</label>
+        <input type="radio" name="status" id="inActive" value="inActive" /><label for="inActive">InActive</label><br />
+        <input type="submit" value="Submit" id="btnSubmit" />
+    </form>
+    <hr />
+    <div>
+        <label for="searchBookName">Book Name</label>
+        <input type="text" name="searchBookNames" id="searchBookName" />
+        <button id="btnSearch">Search</button>
+        <button id="btnSort">Sort by Price ASC</button>
+    </div>
+    <hr />
+    <table border="1">
+        <thead>
+            <tr>
+                <th>BookId</th>
+                <th>Book Name</th>
+                <th>Price</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="content">
+
+        </tbody>
+    </table>
+    <script>
+        // bài 6: Xây dựng đối tượng sách
+        let action = "Create";
+        function Book() {
+            this.inputData = function () {
+                // Nhập thông tin sách
+                this.bookId = document.getElementById("bookId").value;
+                this.bookName = document.getElementById("bookName").value;
+                this.price = Number(document.getElementById("price").value);
+                this.author = document.getElementById("author").value;
+                this.status = document.querySelector("input[type='radio']:checked").value;
+            }
+            this.displayData = function () {
+                document.getElementById("content").innerHTML += `
+                        <tr>
+                            <td>${this.bookId}</td>
+                            <td>${this.bookName}</td>                       
+                            <td>${this.price}</td>
+                            <td>${this.author}</td>
+                            <td>${this.status}</td>
+                            <td>
+                                <button onclick="initEdit('${this.bookId}')">Edit</button>
+                                <button onclick="deleteBook('${this.bookId}')">Delete</button>
+                            </td>
+                        </tr>
+                `
+            }
+        }
+        // Bài 7:
+        // Mảng đối tượng sách lưu trữ các sách đang quản lý
+        let arrBooks = [];
+        //1. Hiển thị thông tin sách
+        function displayListBook() {
+            // Xóa trắng table
+            document.getElementById("content").innerHTML = "";
+            for (let index = 0; index < arrBooks.length; index++) {
+                arrBooks[index].displayData();
+            }
+        }
+        // 2. thêm mới một sách
+        let btnSubmit = document.getElementById("btnSubmit");
+        btnSubmit.addEventListener("click", function (event) {
+            event.preventDefault();
+            if (action == "Create") {
+                // Khởi tạo đối tượng newBook để thêm mới
+                let newBook = new Book();
+                // Nhập thông tin cho đối tượng newBook
+                newBook.inputData();
+                // Thêm newBook vào mảng arrBooks
+                arrBooks.push(newBook);
+                // Gọi lại hàm hiển thị dữ liệu tất cả sách
+                displayListBook();
+                // Xóa dữ liệu trên form
+                clearDataForm();
+            } else {
+                // action = "Edit"
+                // 3.2: cập nhật sách khi người dùng chọn submit Form
+                // Lấy thông tin trên form khi người dùng cập nhật
+                let updateBook = new Book();
+                updateBook.inputData();
+                // Tìm kiếm book trong arrBooks để cập nhật
+                let indexUpdate = getIndexBookById(updateBook.bookId);
+                if (indexUpdate > -1) {
+                    arrBooks[indexUpdate] = updateBook;
+                }
+                // Hiển thị lại dữ liệu
+                displayListBook();
+                // Xóa dữ liệu trên form
+                clearDataForm();
+                //chuyển action = "Create"
+                action = "Create";
+                // Chuyển lại bookId với readonly = false
+                document.getElementById("bookId").readOnly = false;
+
+            }
+        })
+        // Hàm clear data trên form
+        function clearDataForm() {
+            document.getElementById("bookId").value = "";
+            document.getElementById("bookName").value = "";
+            document.getElementById("price").value = "";
+            document.getElementById("author").value = "";
+            document.getElementById("active").checked = true;
+        }
+        // 3. Cập nhật sách
+        // 3.1: Lấy thông tin sách cần cập nhật hiển thị trên form cho người dùng sửa
+        function initEdit(bookId) {
+            // từ bookId tìm ra được đối tượng sách cần cập nhật    
+            for (let index = 0; index < arrBooks.length; index++) {
+                if (arrBooks[index].bookId == bookId) {
+                    // Hiển thị dữ liệu lên form
+                    document.getElementById("bookId").value = arrBooks[index].bookId;
+                    document.getElementById("bookId").readOnly = true;
+                    document.getElementById("bookName").value = arrBooks[index].bookName;
+                    document.getElementById("price").value = arrBooks[index].price;
+                    document.getElementById("author").value = arrBooks[index].author;
+                    if (arrBooks[index].status == "active") {
+                        document.getElementById("active").checked = true;
+                    } else {
+                        document.getElementById("inActive").checked = true;
+                    }
+                    // chuyển cờ action thành giá trị là edit
+                    action = "Edit";
+                    break;
+                }
+            }
+        }
+        // 4. Xóa sách
+        function deleteBook(bookId) {
+            // tìm sách cần xóa trong mảng
+            let indexDelete = getIndexBookById(bookId);
+            // Xóa phần tử trong mảng sách
+            arrBooks.splice(indexDelete, 1);
+            // hiển thị lại danh sách sách
+            displayListBook();
+        }
+        // Tìm book theo bookId
+        function getIndexBookById(bookId) {
+            for (let index = 0; index < arrBooks.length; index++) {
+                if (arrBooks[index].bookId == bookId) {
+                    return index;
+                }
+            }
+            return -1;
+        }
+        // 5. Sắp xếp sách theo giá tăng dần
+        let btnSort = document.getElementById("btnSort");
+        btnSort.addEventListener("click", function () {
+            // Sắp xếp mảng arrBooks theo giá tăng dần
+            arrBooks.sort((a, b) => a.price - b.price);
+            // Hiển thị lại dữ liệu
+            displayListBook();
+        });
+        document.onload = displayListBook();
+        // 6. Tìm kiếm sách theo tên sách
+        let btnSearch = document.getElementById("btnSearch");
+        btnSearch.addEventListener("click", function () {
+            // Lấy dữ liệu trong ô search
+            let searchBookName = document.getElementById("searchBookName").value;
+            // Tìm những sách chứa searchBookName trong mảng
+            document.getElementById("content").innerHTML = "";
+            for (let index = 0; index < arrBooks.length; index++) {
+                if (arrBooks[index].bookName.includes(searchBookName)) {
+                    document.getElementById("content").innerHTML += `
+                    <tr>
+                            <td>${arrBooks[index].bookId}</td>
+                            <td>${arrBooks[index].bookName}</td>                       
+                            <td>${arrBooks[index].price}</td>
+                            <td>${arrBooks[index].author}</td>
+                            <td>${arrBooks[index].status}</td>
+                            <td>
+                                <button onclick="initEdit('${arrBooks[index].bookId}')">Edit</button>
+                                <button onclick="deleteBook('${arrBooks[index].bookId}')">Delete</button>
+                            </td>
+                        </tr>
+                    `
+                }
+            }
+
+        })
+
+
+    </script>
+</body>
+
+</html>
